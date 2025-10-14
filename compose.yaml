@@ -1,0 +1,61 @@
+services:
+  api:
+    container_name: dw-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ${BUILD_TARGET:-dev}
+    ports:
+      - 3000:3000
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=3000
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST=db
+    volumes:
+      - .:/dw-backend # live code updates for dev
+      - /dw-backend/node_modules # prevent overwriting node_modules
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "if [ '$${NODE_ENV}' = 'production' ];
+            then npm start;
+            else nodemon --legacy-watch app.js;
+            fi"
+
+  db:
+    container_name: dw-db
+    image: postgres:17.6
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    expose:
+      - 5432
+    healthcheck:
+      test: ["CMD", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4:9.8
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_MAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+    ports:
+      - "5050:80"
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:
