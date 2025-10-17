@@ -22,7 +22,7 @@ const Outfit = sequelize.define(
       allowNull: true,
     },
     date_worn: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       allowNull: true,
     },
     is_favorite: {
