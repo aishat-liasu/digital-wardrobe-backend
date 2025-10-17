@@ -1,8 +1,8 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../config/db.config");
 
-const Clothes = sequelize.define(
-  "Clothes",
+const Cloth = sequelize.define(
+  "Cloth",
   {
     id: {
       type: DataTypes.UUID,
@@ -15,6 +15,7 @@ const Clothes = sequelize.define(
       references: {
         model: "users",
         key: "id",
+        deferrable: Deferrable.INITIALLY_DEFERRED,
       },
     },
     name: {
@@ -30,8 +31,8 @@ const Clothes = sequelize.define(
       },
       comment: "Reference to the type of clothing (Hijab, Gown, etc.)",
     },
-    color: {
-      type: DataTypes.STRING,
+    colour: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: true,
     },
     image_name: {
@@ -49,4 +50,4 @@ const Clothes = sequelize.define(
   },
 );
 
-module.exports = Clothes;
+module.exports = Cloth;
