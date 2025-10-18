@@ -4,12 +4,12 @@ const { sequelize } = require("../config/db.config");
 const ClothStatusMap = sequelize.define(
   "ClothStatusMap",
   {
-    cloth_id: {
+    clothId: {
       type: DataTypes.UUID,
       allowNull: false,
       primaryKey: true,
     },
-    cloth_status_id: {
+    clothStatusId: {
       type: DataTypes.UUID,
       allowNull: false,
       primaryKey: true,
