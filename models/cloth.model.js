@@ -9,7 +9,7 @@ const Cloth = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    user_id: {
+    userId: {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
@@ -22,7 +22,7 @@ const Cloth = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    cloth_type_id: {
+    clothTypeId: {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
@@ -35,7 +35,7 @@ const Cloth = sequelize.define(
       type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: true,
     },
-    image_name: {
+    imageName: {
       type: DataTypes.STRING,
       allowNull: true,
     },

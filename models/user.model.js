@@ -9,17 +9,17 @@ const User = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    cognito_id: {
+    cognitoId: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
       comment: "The Cognito user unique identifier",
     },
-    first_name: {
+    firstName: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    last_name: {
+    lastName: {
       type: DataTypes.STRING,
       allowNull: false,
     },

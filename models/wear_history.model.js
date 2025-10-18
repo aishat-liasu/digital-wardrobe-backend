@@ -9,15 +9,15 @@ const WearHistory = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    user_id: {
+    userId: {
       type: DataTypes.UUID,
       allowNull: false,
     },
-    outfit_id: {
+    outfitId: {
       type: DataTypes.UUID,
       allowNull: true,
     },
-    date_worn: {
+    dateWorn: {
       type: DataTypes.DATEONLY,
       allowNull: false,
     },

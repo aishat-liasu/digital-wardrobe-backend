@@ -9,7 +9,7 @@ const Outfit = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    user_id: {
+    userId: {
       type: DataTypes.UUID,
       allowNull: false,
     },
@@ -21,11 +21,11 @@ const Outfit = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    date_worn: {
+    dateWorn: {
       type: DataTypes.DATEONLY,
       allowNull: true,
     },
-    is_favorite: {
+    isFavorite: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },

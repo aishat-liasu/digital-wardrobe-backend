@@ -4,19 +4,19 @@ const { sequelize } = require("../config/db.config");
 const OutfitItem = sequelize.define(
   "OutfitItem",
   {
-    outfit_id: {
+    outfitId: {
       type: DataTypes.UUID,
       allowNull: false,
       primaryKey: true,
     },
-    cloth_id: {
+    clothId: {
       type: DataTypes.UUID,
       allowNull: false,
       primaryKey: true,
     },
     note: {
       type: DataTypes.TEXT,
-      allowNull: true, // e.g., "Pair with gold accessories"
+      allowNull: true,
     },
   },
   {
