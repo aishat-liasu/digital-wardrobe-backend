@@ -1,12 +1,12 @@
 const { DataTypes } = require("sequelize");
-const { sequelize } = require("../config/db.config");
+const { sequelize } = require("../config/db");
 
 const ClothType = sequelize.define(
   "ClothType",
   {
     id: {
-      type: DataTypes.UUID,
-      defaultValue: DataTypes.UUIDV4,
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
       primaryKey: true,
     },
     name: {
