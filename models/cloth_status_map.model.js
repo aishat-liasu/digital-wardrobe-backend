@@ -8,16 +8,26 @@ const ClothStatusMap = sequelize.define(
       type: DataTypes.UUID,
       allowNull: false,
       primaryKey: true,
+      references: {
+        model: "clothes",
+        key: "id",
+        deferrable: Deferrable.INITIALLY_DEFERRED,
+      },
     },
     clothStatusId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: false,
       primaryKey: true,
+      references: {
+        model: "cloth_statuses",
+        key: "id",
+        deferrable: Deferrable.INITIALLY_DEFERRED,
+      },
     },
   },
   {
     tableName: "cloth_status_map",
-    timestamps: false,
+    timestamps: true,
   },
 );
 
