@@ -28,6 +28,7 @@ const Cloth = sequelize.define(
       references: {
         model: "cloth_types",
         key: "id",
+        deferrable: Deferrable.INITIALLY_DEFERRED,
       },
       comment: "Reference to the type of clothing (Hijab, Gown, etc.)",
     },
