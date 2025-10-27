@@ -23,7 +23,7 @@ const Cloth = sequelize.define(
       allowNull: false,
     },
     clothTypeId: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: "cloth_types",
