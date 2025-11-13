@@ -1,11 +1,16 @@
-const { Sequelize } = require("sequelize");
+import { Sequelize } from "sequelize";
 
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  dialect: "postgres",
-  logging: false,
-});
+const sequelize = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    dialect: "postgres",
+    logging: false,
+  }
+);
 
 const testConnection = async () => {
   try {
@@ -16,5 +21,4 @@ const testConnection = async () => {
   }
 };
 
-// Export both the sequelize instance and helper
-module.exports = { sequelize, testConnection };
+export { sequelize, testConnection };
