@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "Backend service for the Digital Wardrobe web app using Express, Sequelize, and AWS SDK (Cognito Auth)",
   "main": "app.js",
+  "type": "module",
   "scripts": {
-    "dev": "nodemon app.js",
+    "dev": "nodemon --legacy-watch app.js",
     "start": "node app.js",
     "db:migrate": "sequelize db:migrate",
     "db:seed": "sequelize db:seed:all",
@@ -26,15 +27,20 @@
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.901.0",
+    "@aws-sdk/client-cognito-identity-provider": "^3.913.0",
     "aws-jwt-verify": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
+    "helmet": "^8.1.0",
     "multer": "^2.0.2",
+    "morgan": "^1.10.1",
     "pg": "^8.16.3",
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.37.3",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "winston": "^3.18.3",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "eslint": "^9.36.0",
