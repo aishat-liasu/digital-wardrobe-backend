@@ -1,5 +1,5 @@
-const { DataTypes } = require("sequelize");
-const { sequelize } = require("../config/db");
+import { DataTypes } from "sequelize";
+import { sequelize } from "../config/db.js";
 
 const WearHistory = sequelize.define(
   "WearHistory",
@@ -29,7 +29,7 @@ const WearHistory = sequelize.define(
   {
     tableName: "wear_history",
     timestamps: true,
-  },
+  }
 );
 
-module.exports = WearHistory;
+export default WearHistory;

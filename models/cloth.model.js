@@ -1,5 +1,5 @@
-const { DataTypes } = require("sequelize");
-const { sequelize } = require("../config/db");
+import { DataTypes } from "sequelize";
+import { sequelize } from "../config/db.js";
 
 const Cloth = sequelize.define(
   "Cloth",
@@ -48,7 +48,7 @@ const Cloth = sequelize.define(
   {
     tableName: "clothes",
     timestamps: true,
-  },
+  }
 );
 
-module.exports = Cloth;
+export default Cloth;
