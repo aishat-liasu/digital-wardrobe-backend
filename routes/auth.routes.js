@@ -12,9 +12,12 @@ export default class AuthRoutes {
 
   initializeRoutes() {
     this.router.post(`${this.path}/signup`, this.authController.signUp);
-    this.router.post(`${this.path}/confirm`, this.authController.confirmSignUp);
+    this.router.post(
+      `${this.path}/confirm-signup`,
+      this.authController.confirmSignUp
+    );
     this.router.post(`${this.path}/verify-otp`, this.authController.verifyOtp);
-    this.router.get(`${this.path}/login`, this.authController.login);
+    this.router.post(`${this.path}/login`, this.authController.login);
     this.router.get(
       `${this.path}/resend-code`,
       this.authController.resendVerificationCode
