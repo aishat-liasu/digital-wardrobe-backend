@@ -19,6 +19,11 @@ const ClothType = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+    displayPriority: {
+      type: DataTypes.INTEGER,
+      defaultValue: 100,
+      allowNull: false,
+    },
   },
   {
     tableName: "cloth_types",
