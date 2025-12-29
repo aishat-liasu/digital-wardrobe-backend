@@ -12,14 +12,17 @@ const WearHistory = sequelize.define(
     userId: {
       type: DataTypes.UUID,
       allowNull: false,
+      references: { model: "users", key: "id" },
     },
     outfitId: {
       type: DataTypes.UUID,
-      allowNull: true,
+      allowNull: false,
+      references: { model: "outfits", key: "id" },
     },
     dateWorn: {
       type: DataTypes.DATEONLY,
       allowNull: false,
+      defaultValue: DataTypes.NOW,
     },
     note: {
       type: DataTypes.TEXT,
