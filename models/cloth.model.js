@@ -1,4 +1,4 @@
-import { DataTypes } from "sequelize";
+import { DataTypes, Deferrable } from "sequelize";
 import { sequelize } from "../config/db.js";
 
 const Cloth = sequelize.define(
@@ -32,11 +32,15 @@ const Cloth = sequelize.define(
       },
       comment: "Reference to the type of clothing (Hijab, Gown, etc.)",
     },
-    colour: {
+    colours: {
       type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: true,
     },
     imageName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    imagePath: {
       type: DataTypes.STRING,
       allowNull: true,
     },
