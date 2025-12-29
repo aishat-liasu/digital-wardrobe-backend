@@ -12,23 +12,27 @@ const Outfit = sequelize.define(
     userId: {
       type: DataTypes.UUID,
       allowNull: false,
+      references: { model: "users", key: "id" },
     },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
+    occasionId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: { model: "outfit_occasions", key: "id" },
     },
-    dateWorn: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-    },
-    isFavorite: {
+    description: { type: DataTypes.TEXT, allowNull: false },
+    isFavourite: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
     },
+    wearCount: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+    },
+    lastWornAt: { type: DataTypes.DATEONLY },
   },
   {
     tableName: "outfits",
