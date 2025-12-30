@@ -11,17 +11,12 @@ export default class AuthRoutes {
   }
 
   initializeRoutes() {
-    this.router.post(`${this.path}/signup`, this.authController.signUp);
-    this.router.post(
-      `${this.path}/confirm-signup`,
-      this.authController.confirmSignUp
-    );
-    this.router.post(`${this.path}/verify-otp`, this.authController.verifyOtp);
-    this.router.post(`${this.path}/login`, this.authController.login);
-    this.router.get(
-      `${this.path}/resend-code`,
-      this.authController.resendVerificationCode
-    );
-    this.router.get(`${this.path}/user`, this.authController.getUserData);
+    this.router.post("/refresh", this.authController.refresh);
+    this.router.post("/signup", this.authController.signUp);
+    this.router.post("/confirm-signup", this.authController.confirmSignUp);
+    this.router.post("/verify-otp", this.authController.verifyOtp);
+    this.router.post("/login", this.authController.login);
+    this.router.get("/resend-code", this.authController.resendVerificationCode);
+    this.router.get("/user", this.authController.getUserData);
   }
 }
