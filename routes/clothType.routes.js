@@ -12,8 +12,8 @@ export default class ClothTypeRoutes {
   }
 
   initializeRoutes() {
-    this.router.get(`${this.path}`, this.controller.getAll);
-    this.router.get(`${this.path}/:id`, this.controller.getById);
+    this.router.get("/", this.controller.getAll);
+    this.router.get("/:id", this.controller.getById);
 
     // this.router.post("/", verifyCognitoToken, this.controller.create);
     // this.router.put("/:id", verifyCognitoToken, this.controller.update);
