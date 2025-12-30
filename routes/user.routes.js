@@ -3,7 +3,7 @@ import UserController from "../controllers/user.controller.js";
 import verifyCognitoToken from "../middleware/auth.middleware.js";
 
 export default class UserRoutes {
-  path = "/api";
+  path = "/api/users";
   router = Router();
   userController = new UserController();
 
@@ -12,30 +12,32 @@ export default class UserRoutes {
   }
 
   initializeRoutes() {
-    // Private routes
+    // Public Routes
+    this.router.post("/", this.userController.createUser);
+    this.router.get("/all", this.userController.getUsers);
+
+    // Apply middleware to all routes below this line
+    this.router.use(verifyCognitoToken);
+
+    // Get User by Cognito ID
     this.router.get(
-      `${this.path}/user/:id`,
-      verifyCognitoToken,
-      this.userController.getUserById
-    );
-    this.router.get(
-      `${this.path}/users/cognito/:cognitoId`,
-      verifyCognitoToken,
+      "/cognito/:cognitoId",
       this.userController.getUserByCognitoId
     );
-    this.router.put(
-      `${this.path}/user/:id`,
-      verifyCognitoToken,
-      this.userController.updateUser
-    );
-    this.router.delete(
-      `${this.path}/user/:id`,
-      verifyCognitoToken,
-      this.userController.deleteUser
-    );
 
-    // Public route
-    this.router.get(`${this.path}/users`, this.userController.getUsers);
-    this.router.post(`${this.path}/users`, this.userController.createUser);
+    // Root Path
+    this.router.get("/", (req, res, next) => {
+      if (req.query.email) {
+        return this.userController.getUserByEmail(req, res, next);
+      }
+      return this.userController.getUser(req, res, next);
+    });
+
+    // ID Path
+    this.router
+      .route("/:id")
+      .get(this.userController.getUserById)
+      .put(this.userController.updateUser)
+      .delete(this.userController.deleteUser);
   }
 }
