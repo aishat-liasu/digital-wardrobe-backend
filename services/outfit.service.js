@@ -57,19 +57,6 @@ class OutfitService {
         await OutfitTagMap.bulkCreate(tagMappings, { transaction: t });
       }
 
-      // Create Initial Wear History if date provided
-      if (lastWornAt) {
-        await WearHistory.create(
-          {
-            userId,
-            outfitId: outfit.id,
-            dateWorn: lastWornAt,
-            note: "Initial log",
-          },
-          { transaction: t }
-        );
-      }
-
       await t.commit();
       return outfit;
     } catch (error) {
@@ -126,7 +113,6 @@ class OutfitService {
           json_agg(DISTINCT jsonb_build_object(
              'id', c.id, 
              'imagePath', c."imagePath",
-             'colours', c.colours,
              'displayPriority', ct."displayPriority"
           )) 
           FILTER (WHERE c.id IS NOT NULL), '[]'
@@ -171,13 +157,13 @@ class OutfitService {
       type: sequelize.QueryTypes.SELECT,
     });
 
-    console.log(results);
+    console.log(results[0]);
 
     const totalCount = results.length ? results[0].totalCount : 0;
 
     const dataWithUrls = await Promise.all(
-      results.map(async (outfit) => {
-        // Sign URLs for all items
+      results.map(async (row) => {
+        const { totalCount, ...outfit } = row;
         const itemsWithUrls = await Promise.all(
           outfit.items.map(async (item) => ({
             ...item,
@@ -311,11 +297,80 @@ class OutfitService {
     const outfit = await Outfit.findOne({ where: { id: outfitId, userId } });
     if (!outfit) throw new Error("Outfit not found");
 
-    // Because of 'ON DELETE CASCADE' in our models,
-    // this single line automatically deletes Junction rows and History rows!
+    const outfitUsageCount = await WearHistory.count({
+      where: { outfitId },
+    });
+
+    if (outfitUsageCount > 0) {
+      const error = new Error(
+        `Cannot delete item. It has been logged under wear history ${outfitUsageCount} time(s).`
+      );
+      error.status = 409;
+      throw error;
+    }
+
     await outfit.destroy();
 
     return { message: "Outfit deleted successfully" };
+  };
+
+  getOutfitStats = async (userId) => {
+    const totalQuery = `
+    SELECT COUNT(*)::int as "totalOutfits"
+    FROM outfits
+    WHERE "userId" = :userId
+  `;
+
+    const occasionQuery = `
+    SELECT 
+      ooc.id, 
+      ooc.name, 
+      COUNT(o.id)::int as count
+    FROM outfit_occasions ooc
+    LEFT JOIN outfits o 
+      ON o."occasionId" = ooc.id 
+      AND o."userId" = :userId
+    GROUP BY ooc.id, ooc.name
+    ORDER BY count DESC;
+  `;
+
+    const tagQuery = `
+    SELECT 
+      t.id, 
+      t.name, 
+      COUNT(o.id)::int as count
+    FROM outfit_tags t
+    LEFT JOIN outfit_tag_map otm 
+      ON otm."tagId" = t.id
+    LEFT JOIN outfits o 
+      ON o.id = otm."outfitId" 
+      AND o."userId" = :userId
+    GROUP BY t.id, t.name
+    HAVING COUNT(o.id) > 0 
+    ORDER BY count DESC;
+  `;
+
+    // Execute in parallel
+    const [totalResult, occasionResult, tagResult] = await Promise.all([
+      sequelize.query(totalQuery, {
+        replacements: { userId },
+        type: sequelize.QueryTypes.SELECT,
+      }),
+      sequelize.query(occasionQuery, {
+        replacements: { userId },
+        type: sequelize.QueryTypes.SELECT,
+      }),
+      sequelize.query(tagQuery, {
+        replacements: { userId },
+        type: sequelize.QueryTypes.SELECT,
+      }),
+    ]);
+
+    return {
+      totalCount: totalResult[0]?.totalOutfits || 0,
+      byOccasion: occasionResult,
+      byTag: tagResult,
+    };
   };
 }
 
