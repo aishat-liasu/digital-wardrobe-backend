@@ -1,11 +1,15 @@
-import { sequelize, Cloth, ClothStatusMap } from "../models/index.js";
+import {
+  sequelize,
+  Cloth,
+  ClothStatusMap,
+  OutfitItem,
+} from "../models/index.js";
 
 import StorageService from "./storage.service.js";
 class ClothService {
   storageService = new StorageService();
   // Create a new cloth
   createCloth = async (userId, clothData) => {
-    // Start Transaction
     console.log(userId, clothData);
     const t = await sequelize.transaction();
 
@@ -140,8 +144,6 @@ class ClothService {
       },
       type: sequelize.QueryTypes.SELECT,
     });
-
-    console.log(results);
 
     const totalCount = results.length ? results[0].totalCount : 0;
 
@@ -283,11 +285,23 @@ class ClothService {
     const cloth = await Cloth.findOne({ where: { id: clothId, userId } });
     if (!cloth) throw new Error("Cloth not found");
 
+    const outfitUsageCount = await OutfitItem.count({
+      where: { clothId: cloth.id },
+    });
+
+    if (outfitUsageCount > 0) {
+      const error = new Error(
+        `Cannot delete item. It is currently being used in ${outfitUsageCount} outfit(s). Please remove it from the outfits first.`
+      );
+      error.status = 409;
+      throw error;
+    }
+
     const imagePath = cloth.imagePath;
     await ClothStatusMap.destroy({ where: { clothId: cloth.id } });
     await cloth.destroy();
 
-    // 4. Clean up AWS S3
+    // Clean up AWS S3
     if (imagePath) this.storageService.deleteFile(imagePath);
 
     return { message: "Cloth deleted successfully" };
@@ -346,8 +360,6 @@ class ClothService {
         type: sequelize.QueryTypes.SELECT,
       }),
     ]);
-
-    console.log(totalResult, typeQuery, statusQuery);
 
     return {
       totalCount: totalResult[0]?.totalClothes || 0,
