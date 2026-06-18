@@ -327,6 +327,44 @@ class WearHistoryService {
       throw error;
     }
   };
+
+  /**
+   * Get stats for the dashboard
+   */
+  getWearStats = async (userId) => {
+    const todayRange = getDateRange({ day: new Date() });
+    const monthRange = getDateRange({}); // defaults to current month
+
+    const todayQuery = `
+      SELECT COUNT(*)::int as "loggedToday"
+      FROM wear_history
+      WHERE "userId" = :userId
+        AND "dateWorn" BETWEEN :todayStart AND :todayEnd
+    `;
+
+    const monthQuery = `
+      SELECT COUNT(*)::int as "wearsThisMonth"
+      FROM wear_history
+      WHERE "userId" = :userId
+        AND "dateWorn" BETWEEN :monthStart AND :monthEnd
+    `;
+
+    const [todayResult, monthResult] = await Promise.all([
+      sequelize.query(todayQuery, {
+        replacements: { userId, todayStart: todayRange.start, todayEnd: todayRange.end },
+        type: sequelize.QueryTypes.SELECT,
+      }),
+      sequelize.query(monthQuery, {
+        replacements: { userId, monthStart: monthRange.start, monthEnd: monthRange.end },
+        type: sequelize.QueryTypes.SELECT,
+      })
+    ]);
+
+    return {
+      loggedToday: todayResult[0]?.loggedToday > 0,
+      wearsThisMonth: monthResult[0]?.wearsThisMonth || 0,
+    };
+  };
 }
 
 export default WearHistoryService;
