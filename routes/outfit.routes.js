@@ -14,6 +14,7 @@ export default class OutfitRoutes {
   initializeRoutes() {
     this.router.use(verifyCognitoToken);
     this.router.get("/stats", this.controller.getOutfitStats);
+    this.router.get("/random", this.controller.getRandomOutfit);
     this.router.get("/", this.controller.getAllOutfits);
     this.router.post("/", this.controller.createOutfit);
     this.router.get("/:id", this.controller.getOutfitById);

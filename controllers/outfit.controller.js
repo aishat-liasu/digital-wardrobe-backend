@@ -59,6 +59,16 @@ class OutfitController {
     }
   };
 
+  getRandomOutfit = async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const result = await this.outfitService.getRandomOutfit(userId);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(404).json({ message: error.message });
+    }
+  };
+
   updateOutfit = async (req, res) => {
     try {
       const userId = req.user.id;

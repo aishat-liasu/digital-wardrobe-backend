@@ -245,6 +245,24 @@ class OutfitService {
     return { ...outfit, items: itemsWithUrls };
   };
 
+  // GET RANDOM OUTFIT
+  getRandomOutfit = async (userId) => {
+    const query = `
+      SELECT id FROM outfits
+      WHERE "userId" = :userId
+      ORDER BY RANDOM()
+      LIMIT 1;
+    `;
+    const results = await sequelize.query(query, {
+      replacements: { userId },
+      type: sequelize.QueryTypes.SELECT,
+    });
+    
+    if (!results.length) throw new Error("No outfits found");
+    
+    return await this.getOutfitById({ outfitId: results[0].id, userId });
+  };
+
   // UPDATE OUTFIT
   updateOutfit = async ({ userId, outfitId, updateData }) => {
     const t = await sequelize.transaction();
