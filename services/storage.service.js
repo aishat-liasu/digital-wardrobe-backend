@@ -17,7 +17,7 @@ class StorageService {
   deleteFile = async (key) => {
     try {
       const command = new DeleteObjectCommand({
-        Bucket: config.aws.bucketName;,
+        Bucket: config.aws.bucketName,
         Key: key,
       });
       await s3Client.send(command);
