@@ -8,7 +8,7 @@ import {
   RespondToAuthChallengeCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import UserService from "./user.service.js";
-import { generateSecretHash } from "../helper/hash.helper.js";
+import { generateSecretHash } from "../helpers/hash.js";
 import { AppError } from "../utils/appError.js";
 
 const userPoolId = process.env.COGNITO_USER_POOL_ID;
@@ -19,26 +19,27 @@ const userService = new UserService();
 
 class AuthService {
   signUp = async ({ email, firstName, lastName }) => {
-    console.log("Auth Service Function");
-    const secretHash = generateSecretHash(email, clientId, clientSecret);
+    try {
+      const secretHash = generateSecretHash(email, clientId, clientSecret);
 
-    const params = {
-      ClientId: clientId,
-      Username: email,
-      SecretHash: secretHash,
-      UserAttributes: [
-        { Name: "email", Value: email },
-        { Name: "given_name", Value: firstName },
-        { Name: "family_name", Value: lastName },
-      ],
-    };
-    const command = new SignUpCommand(params);
-    console.log(command);
-    return await client.send(command);
+      const params = {
+        ClientId: clientId,
+        Username: email,
+        SecretHash: secretHash,
+        UserAttributes: [
+          { Name: "email", Value: email },
+          { Name: "given_name", Value: firstName },
+          { Name: "family_name", Value: lastName },
+        ],
+      };
+      const command = new SignUpCommand(params);
+      return await client.send(command);
+    } catch (error) {
+      throw error;
+    }
   };
 
-  confirmSignUp = async (email, code) => {
-    console.log(email, code);
+  confirmSignUp = async ({ email, code }) => {
     const secretHash = generateSecretHash(email, clientId, clientSecret);
     const params = {
       ClientId: clientId,
@@ -52,9 +53,6 @@ class AuthService {
     //get user details for verified user
     const userData = await this.getUserData(email);
 
-    console.log("userData", userData);
-
-    // Save user to DB
     await userService.createUser(userData);
     return userData;
   };
@@ -63,8 +61,8 @@ class AuthService {
     const client = new CognitoIdentityProviderClient({
       region: process.env.AWS_REGION,
       credentials: {
-        accessKeyId: process.env.IAM_ACCESS_KEY,
-        secretAccessKey: process.env.IAM_ACCESS_SECRET,
+        accessKeyId: process.env.COGNITO_ACCESS_KEY,
+        secretAccessKey: process.env.COGNITO_ACCESS_SECRET,
       },
     });
 
@@ -106,29 +104,23 @@ class AuthService {
   };
 
   login = async (email) => {
-    const secretHash = generateSecretHash(email, clientId, clientSecret);
-    const params = {
-      AuthFlow: "USER_AUTH",
-      ClientId: clientId,
-      AuthParameters: {
-        USERNAME: email,
-        PREFERRED_CHALLENGE: "EMAIL_OTP",
-        SECRET_HASH: secretHash,
-      },
-    };
-    //get user details for verified user
-    const userData = await this.getUserData(email);
+    try {
+      const secretHash = generateSecretHash(email, clientId, clientSecret);
+      const params = {
+        AuthFlow: "USER_AUTH",
+        ClientId: clientId,
+        AuthParameters: {
+          USERNAME: email,
+          PREFERRED_CHALLENGE: "EMAIL_OTP",
+          SECRET_HASH: secretHash,
+        },
+      };
 
-    const findUser = await userService.getUserByCognitoId(userData.cognitoId);
-
-    console.log(findUser);
-
-    if (!findUser) {
-      await userService.createUser(userData);
+      const command = new InitiateAuthCommand(params);
+      return await client.send(command);
+    } catch (error) {
+      throw error;
     }
-
-    const command = new InitiateAuthCommand(params);
-    return await client.send(command);
   };
 
   verifyOtp = async ({ email, code, session }) => {
@@ -145,7 +137,43 @@ class AuthService {
     };
 
     const command = new RespondToAuthChallengeCommand(params);
-    return await client.send(command);
+    const authResult = await client.send(command);
+
+    // After successful OTP validation, ensure user exists in DB
+    const userData = await this.getUserData(email);
+    const findUser = await userService.getUserByCognitoId(userData.cognitoId);
+
+    if (!findUser) {
+      await userService.createUser(userData);
+    }
+
+    return authResult;
+  };
+
+  refreshToken = async ({ email, refreshToken }) => {
+    try {
+      const secretHash = generateSecretHash(email, clientId, clientSecret);
+
+      const params = {
+        ClientId: clientId,
+        AuthFlow: "REFRESH_TOKEN_AUTH",
+        AuthParameters: {
+          REFRESH_TOKEN: refreshToken,
+          SECRET_HASH: secretHash,
+        },
+      };
+
+      const command = new InitiateAuthCommand(params);
+
+      return await client.send(command);
+    } catch (error) {
+      console.error("Refresh Token Failed:", error);
+      throw new AppError(
+        401,
+        "Session expired. Please log in again.",
+        "UNAUTHORIZED",
+      );
+    }
   };
 }
 
