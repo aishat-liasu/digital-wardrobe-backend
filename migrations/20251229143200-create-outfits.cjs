@@ -29,11 +29,9 @@ module.exports = {
         allowNull: false,
         references: { model: "outfit_occasions", key: "id" },
         onUpdate: "CASCADE",
+        onDelete: "RESTRICT"
       },
-      imagePath: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
+
       isFavourite: {
         type: Sequelize.BOOLEAN,
         defaultValue: false,
