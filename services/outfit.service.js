@@ -6,11 +6,12 @@ import {
   WearHistory,
 } from "../models/index.js";
 import StorageService from "./storage.service.js";
+import { AppError } from "../utils/appError.js";
 
 class OutfitService {
   storageService = new StorageService();
 
-  // CREATE OUTFIT
+
   createOutfit = async (userId, outfitData) => {
     const t = await sequelize.transaction();
 
@@ -65,7 +66,7 @@ class OutfitService {
     }
   };
 
-  // GET ALL OUTFITS
+
   getAllOutfits = async ({
     userId,
     page = 1,
@@ -77,8 +78,6 @@ class OutfitService {
     sortBy = "createdAt",
     sortOrder = "DESC",
   }) => {
-    console.log("getAllOutfits");
-    console.log(userId, page, limit, search, occasionId, isFavourite, tagIds);
     const offset = (page - 1) * limit;
 
     // Sorting Logic
@@ -157,8 +156,6 @@ class OutfitService {
       type: sequelize.QueryTypes.SELECT,
     });
 
-    console.log(results[0]);
-
     const totalCount = results.length ? results[0].totalCount : 0;
 
     const dataWithUrls = await Promise.all(
@@ -192,10 +189,9 @@ class OutfitService {
     };
   };
 
-  // GET ONE OUTFIT
+
   getOutfitById = async ({ outfitId, userId }) => {
     // Reusing the same logic structure but for single ID
-    console.log("getOneOutfit");
     const query = `
       SELECT 
         o.*,
@@ -224,7 +220,7 @@ class OutfitService {
       type: sequelize.QueryTypes.SELECT,
     });
 
-    if (!results.length) throw new Error("Outfit not found");
+    if (!results.length) throw new AppError(404, "Outfit not found", "NOT_FOUND");
 
     const outfit = results[0];
 
@@ -245,7 +241,7 @@ class OutfitService {
     return { ...outfit, items: itemsWithUrls };
   };
 
-  // GET RANDOM OUTFIT
+
   getRandomOutfit = async (userId) => {
     const query = `
       SELECT id FROM outfits
@@ -257,19 +253,19 @@ class OutfitService {
       replacements: { userId },
       type: sequelize.QueryTypes.SELECT,
     });
-    
-    if (!results.length) throw new Error("No outfits found");
-    
+
+    if (!results.length) throw new AppError(404, "No outfits found", "NOT_FOUND");
+
     return await this.getOutfitById({ outfitId: results[0].id, userId });
   };
 
-  // UPDATE OUTFIT
+
   updateOutfit = async ({ userId, outfitId, updateData }) => {
     const t = await sequelize.transaction();
 
     try {
       const outfit = await Outfit.findOne({ where: { id: outfitId, userId } });
-      if (!outfit) throw new Error("Outfit not found");
+      if (!outfit) throw new AppError(404, "Outfit not found", "NOT_FOUND");
 
       const { name, description, occasionId, isFavourite, clothIds, tagIds } =
         updateData;
@@ -310,21 +306,17 @@ class OutfitService {
     }
   };
 
-  // DELETE OUTFIT
+
   deleteOutfit = async ({ userId, outfitId }) => {
     const outfit = await Outfit.findOne({ where: { id: outfitId, userId } });
-    if (!outfit) throw new Error("Outfit not found");
+    if (!outfit) throw new AppError(404, "Outfit not found", "NOT_FOUND");
 
-    const outfitUsageCount = await WearHistory.count({
+    const wearHistoryCount = await WearHistory.count({
       where: { outfitId },
     });
 
-    if (outfitUsageCount > 0) {
-      const error = new Error(
-        `Cannot delete item. It has been logged under wear history ${outfitUsageCount} time(s).`
-      );
-      error.status = 409;
-      throw error;
+    if (wearHistoryCount > 0) {
+      throw new AppError(409, `Cannot delete outfit. It is currently being used in ${wearHistoryCount} wear history record(s). Please remove it from the wear history first.`, "CONFLICT");
     }
 
     await outfit.destroy();
