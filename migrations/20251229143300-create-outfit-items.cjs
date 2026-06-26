@@ -16,7 +16,7 @@ module.exports = {
         allowNull: false,
         primaryKey: true,
         references: { model: "clothes", key: "id" },
-        onDelete: "CASCADE",
+        onDelete: "RESTRICT",
       },
       createdAt: {
         allowNull: false,
