@@ -1,8 +1,7 @@
-// controllers/user.controller.js
-import User from "../models/user.model.js";
+import { User } from "../models/index.js";
 import { v4 as uuidv4 } from "uuid";
 import { AppError } from "../utils/appError.js";
-import { sequelize } from "../config/db.js";
+import { Op } from "sequelize";
 
 class UserService {
   /**
@@ -11,18 +10,21 @@ class UserService {
    * @returns {Promise<User>}
    */
   createUser = async (userData) => {
-    const [results] = await sequelize.query(
-      `SELECT * from users WHERE \"email\" ='${userData.email}' OR \"cognitoId\" = '${userData.cognitoId}'`
-    );
+    const existingUsers = await User.findAll({
+      where: {
+        [Op.or]: [
+          { email: userData.email },
+          { cognitoId: userData.cognitoId }
+        ]
+      }
+    });
 
-    if (results?.length > 1) {
+    if (existingUsers.length > 1) {
       throw new AppError(404, "Multiple users exists");
     }
 
-    const existingUser = results?.[0];
-    if (existingUser) {
-      console.log(`User ${userData.email} already exists.`);
-      return existingUser;
+    if (existingUsers.length === 1) {
+      return existingUsers[0];
     }
     const user = await User.create({
       id: uuidv4(),
@@ -39,7 +41,6 @@ class UserService {
    */
   getUserById = async (userId) => {
     const user = await User.findByPk(userId);
-    console.log(user);
     if (!user) throw new AppError(404, "User not found");
     return user;
   };
@@ -50,14 +51,7 @@ class UserService {
    * @returns {Promise<User>}
    */
   getUserByCognitoId = async (cognitoId) => {
-    console.log("Get user by CognitoId");
     const user = await User.findOne({ where: { cognitoId } });
-    const [results] = await sequelize.query(
-      `SELECT * from users WHERE \"cognitoId\" = '${cognitoId}';`
-    );
-
-    console.log(results);
-
     if (!user) throw new AppError(404, "Cognito user doesn't exist");
     return user;
   };
@@ -68,14 +62,7 @@ class UserService {
    * @returns {Promise<User>}
    */
   getUserByEmail = async (email) => {
-    console.log("Get user by email");
     const user = await User.findOne({ where: { email } });
-    const [results] = await sequelize.query(
-      `SELECT * from users WHERE \"email\" = '${email}';`
-    );
-
-    console.log(results);
-
     if (!user) throw new AppError(404, "User doesn't exist");
     return user;
   };
@@ -89,12 +76,11 @@ class UserService {
   updateUser = async (userId, firstName, lastName) => {
     try {
       const user = await User.findByPk(userId);
-      if (!user) throw new Error("User not found");
+      if (!user) throw new AppError(404, "User not found", "NOT_FOUND");
       await user.update({ firstName, lastName });
       return user;
     } catch (error) {
-      console.error("Error updating user:", error);
-      throw new Error("Failed to update user");
+      throw new AppError(500, "Failed to update user", "UPDATE_FAILED");
     }
   };
 
@@ -106,11 +92,10 @@ class UserService {
   deleteUser = async (userId) => {
     try {
       const user = await User.findByPk(userId);
-      if (!user) throw new Error("User not found");
+      if (!user) throw new AppError(404, "User not found", "NOT_FOUND");
       await user.destroy();
     } catch (error) {
-      console.error("Error deleting user:", error);
-      throw new Error("Failed to delete user");
+      throw new AppError(500, "Failed to delete user", "DELETE_FAILED");
     }
   };
 
