@@ -17,12 +17,14 @@ export default class OutfitTagService {
   };
 
   update = async (id, data) => {
-    const tag = await OutfitTag.getById(id);
+    const tag = await OutfitTag.findByPk(id);
+    if (!tag) throw new AppError(404, "Outfit tag not found");
     return tag.update(data);
   };
 
   delete = async (id) => {
-    const tag = await OutfitTag.getById(id);
+    const tag = await OutfitTag.findByPk(id);
+    if (!tag) throw new AppError(404, "Outfit tag not found");
     await tag.destroy();
   };
 }

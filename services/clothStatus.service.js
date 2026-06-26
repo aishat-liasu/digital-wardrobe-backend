@@ -8,7 +8,7 @@ export default class ClothStatusService {
 
   getById = async (id) => {
     const type = await ClothStatus.findByPk(id);
-    if (!type) throw new AppError(404, "Cloth type not found");
+    if (!type) throw new AppError(404, "Cloth status not found");
     return type;
   };
 
@@ -17,12 +17,14 @@ export default class ClothStatusService {
   };
 
   update = async (id, data) => {
-    const type = await ClothStatus.getById(id);
+    const type = await ClothStatus.findByPk(id);
+    if (!type) throw new AppError(404, "Cloth status not found");
     return type.update(data);
   };
 
   delete = async (id) => {
-    const type = await ClothStatus.getById(id);
+    const type = await ClothStatus.findByPk(id);
+    if (!type) throw new AppError(404, "Cloth status not found");
     await type.destroy();
   };
 }

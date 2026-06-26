@@ -17,12 +17,14 @@ export default class OutfitOccasionService {
   };
 
   update = async (id, data) => {
-    const occasion = await OutfitOccasion.getById(id);
+    const occasion = await OutfitOccasion.findByPk(id);
+    if (!occasion) throw new AppError(404, "Outfit occasion not found");
     return occasion.update(data);
   };
 
   delete = async (id) => {
-    const occasion = await OutfitOccasion.getById(id);
+    const occasion = await OutfitOccasion.findByPk(id);
+    if (!occasion) throw new AppError(404, "Outfit occasion not found");
     await occasion.destroy();
   };
 }

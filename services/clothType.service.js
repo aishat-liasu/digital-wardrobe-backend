@@ -17,12 +17,14 @@ export default class ClothTypeService {
   };
 
   update = async (id, data) => {
-    const type = await ClothType.getById(id);
+    const type = await ClothType.findByPk(id);
+    if (!type) throw new AppError(404, "Cloth type not found");
     return type.update(data);
   };
 
   delete = async (id) => {
-    const type = await ClothType.getById(id);
+    const type = await ClothType.findByPk(id);
+    if (!type) throw new AppError(404, "Cloth type not found");
     await type.destroy();
   };
 }
