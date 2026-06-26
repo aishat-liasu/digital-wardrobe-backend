@@ -12,20 +12,15 @@ export default class UserRoutes {
   }
 
   initializeRoutes() {
-    // Public Routes
     this.router.post("/", this.userController.createUser);
-    this.router.get("/all", this.userController.getUsers);
 
-    // Apply middleware to all routes below this line
     this.router.use(verifyCognitoToken);
 
-    // Get User by Cognito ID
     this.router.get(
       "/cognito/:cognitoId",
-      this.userController.getUserByCognitoId
+      this.userController.getUserByCognitoId,
     );
 
-    // Root Path
     this.router.get("/", (req, res, next) => {
       if (req.query.email) {
         return this.userController.getUserByEmail(req, res, next);
@@ -33,11 +28,10 @@ export default class UserRoutes {
       return this.userController.getUser(req, res, next);
     });
 
-    // ID Path
     this.router
       .route("/:id")
       .get(this.userController.getUserById)
-      .put(this.userController.updateUser)
+      .patch(this.userController.updateUser)
       .delete(this.userController.deleteUser);
   }
 }
