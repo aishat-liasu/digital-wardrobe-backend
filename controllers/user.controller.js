@@ -1,115 +1,89 @@
 import UserService from "../services/user.service.js";
+import { catchAsync } from "../utils/catchAsync.js";
 
 class UserController {
   userService = new UserService();
   /**
    * Create a user after successful Cognito signup
    */
-  createUser = async (req, res) => {
-    try {
-      const userData = req.body; // { cognitoId, email, firstName, lastName }
-      const user = await this.userService.createUser(userData);
-      res.status(201).json({ success: true, data: user });
-    } catch (error) {
-      console.error("Error creating user:", error);
-      res.status(500).json({ success: false, message: error.message });
-    }
-  };
+  createUser = catchAsync(async (req, res, next) => {
+    const userData = req.body; // { cognitoId, email, firstName, lastName }
+    const user = await this.userService.createUser(userData);
+    res.status(201).json({ success: true, data: user });
+  });
 
   /**
    * Get user by Id
    */
-  getUserById = async (req, res) => {
-    try {
-      const { id } = req.params;
+  getUser = catchAsync(async (req, res, next) => {
+    const userId = req.user.id;
+    const user = await this.userService.getUserById(userId);
+    res.status(200).json({ success: true, data: user });
+  });
 
-      const user = await this.userService.getUserById(id);
-      res.status(200).json({ success: true, data: user });
-    } catch (error) {
-      console.log(error);
-      res
-        .status(error?.status || 500)
-        .json({ success: false, message: error.message, data: {} });
-    }
-  };
+  /**
+   * Get user by Id
+   */
+  getUserById = catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+
+    const user = await this.userService.getUserById(id);
+    res.status(200).json({ success: true, data: user });
+  });
 
   /**
    * Get user by cognitoId
    */
-  getUserByCognitoId = async (req, res) => {
-    try {
-      const { cognitoId } = req.params;
-      const user = await this.userService.getUserByCognitoId(cognitoId);
-      res.status(200).json({ success: true, data: user });
-    } catch (error) {
-      res
-        .status(error?.status || 500)
-        .json({ success: false, message: error.message, data: {} });
-    }
-  };
+  getUserByCognitoId = catchAsync(async (req, res, next) => {
+    const { cognitoId } = req.params;
+    const user = await this.userService.getUserByCognitoId(cognitoId);
+    res.status(200).json({ success: true, data: user });
+  });
 
   /**
    * Get user by email
    */
-  getUserByEmail = async (req, res) => {
-    try {
-      const { email } = req.query;
-      const user = await this.userService.getUserByEmail(email);
-      res.status(200).json({ success: true, data: user });
-    } catch (error) {
-      res
-        .status(error?.status || 500)
-        .json({ success: false, message: error.message, data: {} });
-    }
-  };
+  getUserByEmail = catchAsync(async (req, res, next) => {
+    const { email } = req.query;
+    const user = await this.userService.getUserByEmail(email);
+    res.status(200).json({ success: true, data: user });
+  });
 
   /**
    * Update user data
    */
-  updateUser = async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { firstName, lastName } = req.body;
-      const updatedUser = await this.userService.updateUser(
-        id,
-        firstName,
-        lastName
-      );
-      res.status(200).json({ success: true, data: updatedUser });
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
-    }
-  };
+  updateUser = catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+    const { firstName, lastName } = req.body;
+    const updatedUser = await this.userService.updateUser(
+      id,
+      firstName,
+      lastName
+    );
+    res.status(200).json({ success: true, data: updatedUser });
+  });
 
   /**
    * Delete user by Id
    */
-  deleteUser = async (req, res) => {
-    try {
-      const { id } = req.params;
-      await this.userService.deleteUser(id);
-      res
-        .status(200)
-        .json({ success: true, message: "User deleted successfully" });
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
-    }
-  };
+  deleteUser = catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+    await this.userService.deleteUser(id);
+    res
+      .status(200)
+      .json({ success: true, message: "User deleted successfully" });
+  });
 
   /**
    * Get all the users on the users table
    */
-  getUsers = async (req, res) => {
-    try {
-      if (req.query.email) {
-        return this.getUserByEmail(req, res);
-      }
-      const users = await this.userService.getUsers();
-      res.status(200).json({ success: true, data: users });
-    } catch (error) {
-      res.status(500).json({ success: false, message: error.message });
+  getUsers = catchAsync(async (req, res, next) => {
+    if (req.query.email) {
+      return this.getUserByEmail(req, res, next);
     }
-  };
+    const users = await this.userService.getUsers();
+    res.status(200).json({ success: true, data: users });
+  });
 }
 
 export default UserController;

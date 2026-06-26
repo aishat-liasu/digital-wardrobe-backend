@@ -1,113 +1,92 @@
 import AuthService from "../services/auth.service.js";
+import { catchAsync } from "../utils/catchAsync.js";
 import { AwsError } from "../utils/awsError.js";
 
 class AuthController {
   authService = new AuthService();
 
   // Signup a new user to Cognito email OTP
-  // TODO: DATA VALIDATION
-  signUp = async (req, res) => {
+  signUp = catchAsync(async (req, res, next) => {
     const { email, firstName, lastName } = req.body;
-    console.log("=== REQ.BODY ===\n", req.body);
 
-    console.log("This in AuthController", this);
+    const response = await this.authService.signUp({
+      email,
+      firstName,
+      lastName,
+    });
 
-    try {
-      const response = await this.authService.signUp({
-        email,
-        firstName,
-        lastName,
-      });
-
-      res.status(201).json({
-        message: "Account created. Check your email to confirm.",
-        success: true,
-        data: response,
-      });
-    } catch (error) {
-      const newError = AwsError(error);
-      next(newError);
-    }
-  };
+    res.status(201).json({
+      message: "Account created. Check your email to confirm.",
+      success: true,
+      data: response,
+    });
+  });
 
   // Confirm user signup (email verification)
-  confirmSignUp = async (req, res, next) => {
+  confirmSignUp = catchAsync(async (req, res, next) => {
     const { email, code } = req.body;
-    console.log("=== REQ.BODY IN CONTROLLER ===\n", req.body);
-    try {
-      const response = await this.authService.confirmSignUp({ email, code });
+    const response = await this.authService.confirmSignUp({ email, code });
 
-      res.status(200).json({
-        message: "User has been verified successfully.",
-        data: response,
-      });
-    } catch (error) {
-      const newError = AwsError(error);
-      next(newError);
-    }
-  };
+    res.status(200).json({
+      message: "User has been verified successfully.",
+      data: response,
+    });
+  });
 
   // Get user info
-  getUserData = async (req, res, next) => {
+  getUserData = catchAsync(async (req, res, next) => {
     const { email } = req.body;
 
-    try {
-      const response = await this.authService.getUserData(email);
-
-      res.status(200).json({ message: "User exits", data: response });
-    } catch (error) {
-      const newError = AwsError(error);
-      next(newError);
-    }
-  };
+    const response = await this.authService.getUserData(email);
+    res.status(200).json({ message: "User exists", data: response });
+  });
 
   // Resend OTP for sign up verification
-  resendVerificationCode = async (req, res) => {
+  resendVerificationCode = catchAsync(async (req, res, next) => {
     const { email } = req.body;
-    try {
-      const response = await this.authService.resendVerificationCode(email);
-      res.json({
-        message: "Confirmation code resent. Check your email.",
-        data: response,
-      });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  };
+    const response = await this.authService.resendVerificationCode(email);
+    res.json({
+      message: "Confirmation code resent. Check your email.",
+      data: response,
+    });
+  });
 
   // Send email email OTP to login
-  login = async (req, res) => {
+  login = catchAsync(async (req, res, next) => {
     const { email } = req.body;
-    try {
-      const response = await this.authService.login(email);
-      res.json({
-        message: "Account confirmed. Check your email for OTP",
-        session: response?.Session,
-      });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  };
+    const response = await this.authService.login(email);
+    res.json({
+      message: "Account confirmed. Check your email for OTP",
+      session: response?.Session,
+    });
+  });
 
   // Verify email OTP
-  verifyOtp = async (req, res) => {
+  verifyOtp = catchAsync(async (req, res, next) => {
     const { email, code, session } = req.body;
 
-    try {
-      const response = await this.authService.verifyOtp({
-        email,
-        code,
-        session,
-      });
-      res.json({
-        message: "Login successful",
-        tokens: response.AuthenticationResult,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(400).json({ message: error.message });
-    }
-  };
+    const response = await this.authService.verifyOtp({
+      email,
+      code,
+      session,
+    });
+    res.json({
+      message: "Login successful",
+      tokens: response.AuthenticationResult,
+    });
+  });
+
+  refresh = catchAsync(async (req, res, next) => {
+    const { email, refreshToken } = req.body;
+    const response = await this.authService.refreshToken({
+      email,
+      refreshToken,
+    });
+    res.json({
+      message: "Refresh successful",
+      tokens: response.AuthenticationResult,
+    });
+  });
 }
 
 export default AuthController;

@@ -1,114 +1,84 @@
 import OutfitService from "../services/outfit.service.js";
+import { catchAsync } from "../utils/catchAsync.js";
 
 class OutfitController {
   outfitService = new OutfitService();
 
-  createOutfit = async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const outfit = await this.outfitService.createOutfit(userId, req.body);
-      res.status(201).json({ message: "Outfit created successfully", outfit });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  };
+  createOutfit = catchAsync(async (req, res, next) => {
+    const userId = req.user.id;
+    const outfit = await this.outfitService.createOutfit(userId, req.body);
+    res.status(201).json({ message: "Outfit created successfully", outfit });
+  });
 
-  getAllOutfits = async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const {
-        page,
-        limit,
-        occasionId,
-        tagIds,
-        isFavourite,
-        search,
-        sortBy,
-        sortOrder,
-      } = req.query;
+  getAllOutfits = catchAsync(async (req, res, next) => {
+    const userId = req.user.id;
+    const {
+      page,
+      limit,
+      occasionId,
+      tagIds,
+      isFavourite,
+      search,
+      sortBy,
+      sortOrder,
+    } = req.query;
 
-      const outfits = await this.outfitService.getAllOutfits({
-        userId,
-        page,
-        limit,
-        occasionId,
-        tagIds,
-        isFavourite,
-        search,
-        sortBy,
-        sortOrder,
-      });
-      res.status(200).json(outfits);
-    } catch (error) {
-      console.log(error);
-      res.status(400).json({ message: error.message });
-    }
-  };
+    const outfits = await this.outfitService.getAllOutfits({
+      userId,
+      page,
+      limit,
+      occasionId,
+      tagIds,
+      isFavourite,
+      search,
+      sortBy,
+      sortOrder,
+    });
+    res.status(200).json(outfits);
+  });
 
-  getOutfitById = async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const { id: outfitId } = req.params;
-      const outfit = await this.outfitService.getOutfitById({
-        userId,
-        outfitId,
-      });
-      res.status(200).json(outfit);
-    } catch (error) {
-      res.status(404).json({ message: error.message });
-    }
-  };
+  getOutfitById = catchAsync(async (req, res, next) => {
+    const userId = req.user.id;
+    const { id: outfitId } = req.params;
+    const outfit = await this.outfitService.getOutfitById({
+      userId,
+      outfitId,
+    });
+    res.status(200).json(outfit);
+  });
 
-  getRandomOutfit = async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const result = await this.outfitService.getRandomOutfit(userId);
-      res.status(200).json(result);
-    } catch (error) {
-      res.status(404).json({ message: error.message });
-    }
-  };
+  getRandomOutfit = catchAsync(async (req, res, next) => {
+    const userId = req.user.id;
+    const result = await this.outfitService.getRandomOutfit(userId);
+    res.status(200).json(result);
+  });
 
-  updateOutfit = async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const { id: outfitId } = req.params;
-      const updateData = req.body;
-      const outfit = await this.outfitService.updateOutfit({
-        outfitId,
-        userId,
-        updateData,
-      });
-      res.status(201).json({ message: "Outfit updated successfully", outfit });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  };
+  updateOutfit = catchAsync(async (req, res, next) => {
+    const userId = req.user.id;
+    const { id: outfitId } = req.params;
+    const updateData = req.body;
+    const outfit = await this.outfitService.updateOutfit({
+      outfitId,
+      userId,
+      updateData,
+    });
+    res.status(201).json({ message: "Outfit updated successfully", outfit });
+  });
 
-  deleteOutfit = async (req, res) => {
-    try {
-      const userId = req.user.id;
-      const { id: outfitId } = req.params;
-      const result = await this.outfitService.deleteOutfit({
-        outfitId,
-        userId,
-      });
-      res.json({ result, message: "Outfit deleted successfully" });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  };
+  deleteOutfit = catchAsync(async (req, res, next) => {
+    const userId = req.user.id;
+    const { id: outfitId } = req.params;
+    const result = await this.outfitService.deleteOutfit({
+      outfitId,
+      userId,
+    });
+    res.json({ result, message: "Outfit deleted successfully" });
+  });
 
-  getOutfitStats = async (req, res) => {
-    try {
-      const stats = await this.outfitService.getOutfitStats(req.user.id);
-
-      res.status(200).json(stats);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Failed to fetch statistics" });
-    }
-  };
+  getOutfitStats = catchAsync(async (req, res, next) => {
+    const stats = await this.outfitService.getOutfitStats(req.user.id);
+    res.status(200).json(stats);
+  });
 }
 
 export default OutfitController;
