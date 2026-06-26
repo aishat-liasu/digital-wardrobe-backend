@@ -1,6 +1,7 @@
-import { sequelize, Outfit, WearHistory } from "../models/index.js";
+import { sequelize, WearHistory, Outfit } from "../models/index.js";
+import { AppError } from "../utils/appError.js";
 
-import { getDateRange } from "../helper/dateFilters.js";
+import { getDateRange } from "../helpers/date.js";
 import StorageService from "./storage.service.js";
 class WearHistoryService {
   storageService = new StorageService();
@@ -10,8 +11,7 @@ class WearHistoryService {
    *
    */
   createWearHistory = async (userId, entryData) => {
-    console.log("createWearHistory");
-    console.log(userId, entryData);
+
     const { outfitId, dateWorn, note } = entryData;
 
     const newDateWorn = dateWorn ? new Date(dateWorn) : new Date();
@@ -38,11 +38,7 @@ class WearHistoryService {
     });
 
     if (existingRows.length > 0) {
-      const error = new Error(
-        "You have already logged this outfit for this date."
-      );
-      error.status = 409;
-      throw error;
+      throw new AppError(409, "A wear history entry already exists for this outfit on the specified date.", "CONFLICT");
     }
     const transaction = await sequelize.transaction();
 
@@ -53,7 +49,7 @@ class WearHistoryService {
       });
 
       if (!outfit) {
-        throw new Error("Outfit not found or does not belong to you.");
+        throw new AppError(404, "Outfit not found or does not belong to you.", "NOT_FOUND");
       }
 
       // Create the Log Entry
@@ -97,12 +93,7 @@ class WearHistoryService {
     limit = 30,
     offset = 0,
   }) => {
-    console.log("getWearHistory");
-    console.log(userId, year, month, weekDate, day, limit, day);
-
     const dateRange = getDateRange({ year, month, weekDate, day });
-
-    console.log(dateRange);
 
     const query = `
     SELECT
@@ -158,8 +149,6 @@ class WearHistoryService {
       },
       type: sequelize.QueryTypes.SELECT,
     });
-
-    console.log(results[0]);
 
     const totalCount = results.length > 0 ? results[0].totalCount : 0;
 
@@ -248,10 +237,10 @@ class WearHistoryService {
 
     const results = await sequelize.query(query, {
       replacements: { userId, id },
-      type: QueryTypes.SELECT,
+      type: sequelize.QueryTypes.SELECT,
     });
 
-    if (!results.length) throw new Error("History entry not found.");
+    if (!results.length) throw new AppError(404, "History entry not found.", "NOT_FOUND");
 
     const row = results[0];
 
@@ -287,7 +276,7 @@ class WearHistoryService {
     });
 
     if (!entry) {
-      throw new Error("History entry not found.");
+      throw new AppError(404, "History entry not found.", "NOT_FOUND");
     }
 
     // Only update fields that are provided
@@ -313,7 +302,7 @@ class WearHistoryService {
       });
 
       if (!entry) {
-        throw new Error("History entry not found.");
+        throw new AppError(404, "History entry not found.", "NOT_FOUND");
       }
 
       const outfit = await Outfit.findByPk(entry.outfitId, transaction);
@@ -331,7 +320,7 @@ class WearHistoryService {
   /**
    * Get stats for the dashboard
    */
-  getWearStats = async (userId) => {
+  getWearHistoryStats = async (userId) => {
     const todayRange = getDateRange({ day: new Date() });
     const monthRange = getDateRange({}); // defaults to current month
 
