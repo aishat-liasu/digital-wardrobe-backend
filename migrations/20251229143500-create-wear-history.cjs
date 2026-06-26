@@ -20,12 +20,12 @@ module.exports = {
         type: Sequelize.UUID,
         allowNull: false,
         references: { model: "outfits", key: "id" },
-        onDelete: "CASCADE",
+        onDelete: "RESTRICT",
       },
       dateWorn: {
         type: Sequelize.DATEONLY,
         allowNull: false,
-        defaultValue: Sequelize.NOW,
+        defaultValue: Sequelize.literal('CURRENT_DATE'),
       },
       note: {
         type: Sequelize.TEXT,
