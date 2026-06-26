@@ -4,18 +4,26 @@ import { Client } from "pg";
 import { logger } from "../utils/logger.js";
 import { createRequire } from "module";
 
+import { config } from "./index.js";
+
 const require = createRequire(import.meta.url);
 
 const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
+  config.db.name,
+  config.db.user,
+  config.db.password,
   {
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
+    host: config.db.host,
+    port: config.db.port,
     dialect: "postgres",
     logging: false,
     benchmark: true,
+    pool: {
+      max: config.db.poolMax,
+      min: config.db.poolMin,
+      acquire: 30000, // Maximum time (ms) to wait for a connection
+      idle: 10000   // Maximum time (ms) a connection can be idle before being released
+    }
   }
 );
 
@@ -61,14 +69,13 @@ const seeder = new Umzug({
 });
 
 const createDbIfNotExists = async () => {
-  const dbName = process.env.DB_NAME;
+  const dbName = config.db.name;
 
-  // Connect to the default 'postgres' database first
   const client = new Client({
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
+    user: config.db.user,
+    password: config.db.password,
+    host: config.db.host,
+    port: config.db.port,
     database: "postgres",
   });
 

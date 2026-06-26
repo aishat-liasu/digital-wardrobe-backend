@@ -4,10 +4,10 @@ import {
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-
-const { AWS_BUCKET_NAME, NODE_ENV } = process.env;
-import { sanitizeFileName } from "../helpers/sanitizeFileName.js";
+import { config } from "../config/index.js";
 import { s3Client } from "../config/aws.js";
+
+import { sanitizeFileName } from "../helpers/sanitizeFileName.js";
 
 class StorageService {
   /**
@@ -17,7 +17,7 @@ class StorageService {
   deleteFile = async (key) => {
     try {
       const command = new DeleteObjectCommand({
-        Bucket: AWS_BUCKET_NAME,
+        Bucket: config.aws.bucketName;,
         Key: key,
       });
       await s3Client.send(command);
@@ -32,7 +32,7 @@ class StorageService {
 
     try {
       const command = new GetObjectCommand({
-        Bucket: AWS_BUCKET_NAME,
+        Bucket: config.aws.bucketName,
         Key: key,
       });
 
@@ -57,12 +57,12 @@ class StorageService {
     targetFolder = "clothes",
     cognitoId = "Unknown",
   }) => {
-    const envFolder = NODE_ENV || "dev";
+    const envFolder = config.env || "development";
     const sanitizedKey = sanitizeFileName(fileName);
     const filePath = `${envFolder}/${targetFolder}/${cognitoId}/${sanitizedKey}`;
 
     const command = new PutObjectCommand({
-      Bucket: AWS_BUCKET_NAME,
+      Bucket: config.aws.bucketName,
       Key: filePath,
       ContentType: fileType,
     });

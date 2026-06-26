@@ -3,10 +3,12 @@ import UserService from "../services/user.service.js";
 import { AppError } from "../utils/appError.js";
 import { catchAsync } from "../utils/catchAsync.js";
 
+import { config } from "../config/index.js";
+
 // Create a verifier instance (for Access Tokens)
 const verifier = CognitoJwtVerifier.create({
-  userPoolId: process.env.COGNITO_USER_POOL_ID,
-  clientId: process.env.COGNITO_CLIENT_ID,
+  userPoolId: config.aws.userPoolId,
+  clientId: config.aws.clientId,
   tokenUse: "access",
 });
 

@@ -11,9 +11,11 @@ import UserService from "./user.service.js";
 import { generateSecretHash } from "../helpers/hash.js";
 import { AppError } from "../utils/appError.js";
 
-const userPoolId = process.env.COGNITO_USER_POOL_ID;
-const clientId = process.env.COGNITO_CLIENT_ID;
-const clientSecret = process.env.COGNITO_CLIENT_SECRET;
+import { config } from "../config/index.js";
+
+const userPoolId = config.aws.userPoolId;
+const clientId = config.aws.clientId;
+const clientSecret = config.aws.clientSecret;
 const client = new CognitoIdentityProviderClient({});
 const userService = new UserService();
 
@@ -59,10 +61,10 @@ class AuthService {
 
   getUserData = async (email) => {
     const client = new CognitoIdentityProviderClient({
-      region: process.env.AWS_REGION,
+      region: config.aws.region,
       credentials: {
-        accessKeyId: process.env.COGNITO_ACCESS_KEY,
-        secretAccessKey: process.env.COGNITO_ACCESS_SECRET,
+        accessKeyId: config.aws.cognitoAccessKey,
+        secretAccessKey: config.aws.cognitoSecretKey,
       },
     });
 
