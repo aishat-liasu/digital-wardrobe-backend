@@ -1,12 +1,16 @@
+import { setDefaultResultOrder } from "node:dns";
+setDefaultResultOrder("ipv4first");
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 
-import { testConnection, migrator, seeder } from "./config/db.js";
+import { testConnection, migrator, seeder, sequelize } from "./config/db.js";
 import errorMiddleware from "./middleware/errorHandler.middleware.js";
-import { logger } from "./utils/logger.js";
+import { config } from "./config/index.js";
+import { logger, stream } from "./utils/logger.js";
+import { globalLimiter } from "./middleware/rateLimiter.middleware.js";
 
 // Routes
 import AuthRoutes from "./routes/auth.routes.js";
@@ -21,11 +25,14 @@ import OutfitOccasionRoutes from "./routes/outfitOccasion.routes.js";
 import OutfitTagRoutes from "./routes/outfitTag.routes.js";
 import OutfitRoutes from "./routes/outfit.routes.js";
 
+import WearHistoryRoutes from "./routes/wearHistory.routes.js";
+import DashboardRoutes from "./routes/dashboard.routes.js";
+
 export class App {
   constructor(routes) {
     this.app = express();
-    this.env = process.env.NODE_ENV || "development";
-    this.port = process.env.PORT || 3000;
+    this.env = config.env;
+    this.port = config.port;
 
     this.initializeMiddlewares();
     this.initializeRoutes(routes);
@@ -33,7 +40,7 @@ export class App {
   }
 
   listen() {
-    this.app.listen(this.port, () => {
+    return this.app.listen(this.port, () => {
       logger.info(`=================================`);
       logger.info(`======= ENV: ${this.env} =======`);
       logger.info(`App listening on the port ${this.port}`);
@@ -45,7 +52,7 @@ export class App {
     await testConnection();
 
     // Run Migrations
-    if (process.env.RUN_MIGRATIONS === "true") {
+    if (config.app.runMigrations) {
       logger.info("Checking for pending migrations...");
 
       try {
@@ -64,7 +71,7 @@ export class App {
     }
 
     // Run Seeders
-    if (process.env.RUN_SEEDERS === "true") {
+    if (config.app.runSeeders) {
       logger.info("Running seeders...");
       try {
         await seeder.up();
@@ -79,12 +86,10 @@ export class App {
   }
 
   initializeMiddlewares() {
-    //this.app.use(morgan(LOG_FORMAT, { stream }));
-    //this.app.use(cors({ origin: ORIGIN, credentials: CREDENTIALS }));
-
-    this.app.use(morgan(process.env.NODE_ENV));
-    this.app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+    this.app.use(morgan(config.logger.format, { stream }));
+    this.app.use(cors({ origin: config.app.corsOrigin, credentials: config.app.corsCredentials }));
     this.app.use(helmet());
+    this.app.use(globalLimiter);
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
   }
@@ -117,11 +122,39 @@ const startServer = async () => {
     new OutfitOccasionRoutes(),
     new OutfitTagRoutes(),
     new OutfitRoutes(),
+    new WearHistoryRoutes(),
+    new DashboardRoutes(),
   ]);
 
   try {
     await app.initializeDatabase();
-    app.listen();
+
+    const server = app.listen();
+
+    const gracefulShutdown = async (signal) => {
+      logger.info(`Received ${signal}. Gracefully shutting down...`);
+      server.close(async () => {
+        logger.info("Closed Express server.");
+        try {
+          await sequelize.close();
+          logger.info("Database connection closed.");
+          process.exit(0);
+        } catch (err) {
+          logger.error("Error during database disconnection:", err);
+          process.exit(1);
+        }
+      });
+
+      // Force close if it takes too long
+      setTimeout(() => {
+        logger.error("Could not close connections in time, forcefully shutting down");
+        process.exit(1);
+      }, 10000);
+    };
+
+    process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+    process.on("SIGINT", () => gracefulShutdown("SIGINT"));
+
   } catch (err) {
     logger.error("Critical Failure during startup:", err);
     process.exit(1);
