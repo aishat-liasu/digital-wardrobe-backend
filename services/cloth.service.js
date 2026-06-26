@@ -6,11 +6,13 @@ import {
 } from "../models/index.js";
 
 import StorageService from "./storage.service.js";
+import { AppError } from "../utils/appError.js";
+
+
 class ClothService {
   storageService = new StorageService();
-  // Create a new cloth
+
   createCloth = async (userId, clothData) => {
-    console.log(userId, clothData);
     const t = await sequelize.transaction();
 
     try {
@@ -24,7 +26,6 @@ class ClothService {
         statusIds = [],
       } = clothData;
 
-      // Create Cloth
       const cloth = await Cloth.create(
         {
           userId,
@@ -57,19 +58,17 @@ class ClothService {
     }
   };
 
-  // Fetch all clothes for a user
+
   getAllClothes = async ({
     userId,
     page = 1,
-    limit = 20,
+    limit = 12,
     clothTypeId,
     statusIds = [],
     search,
     sortBy = "createdAt",
     sortOrder = "DESC",
   }) => {
-    console.log("getAllClothes");
-    console.log(userId, page, limit, search, clothTypeId, statusIds);
     const offset = (page - 1) * limit;
 
     const SORT_COLUMNS = {
@@ -168,9 +167,7 @@ class ClothService {
     };
   };
 
-  // Get one cloth
   getClothById = async ({ clothId, userId }) => {
-    console.log(userId, clothId);
     const query = `
     SELECT
       c.id,
@@ -211,25 +208,44 @@ class ClothService {
       type: sequelize.QueryTypes.SELECT,
     });
 
-    if (!results.length) throw new Error("Cloth not found");
+    if (!results.length) throw new AppError(404, "Cloth not found", "NOT_FOUND");
 
     const clothData = results?.[0];
     const imageUrl = await this.storageService.getFile(clothData?.imagePath);
 
+    // Fetch the outfits this cloth is featured in
+    const outfitsQuery = `
+      SELECT o.id, o.name, COUNT(*) OVER()::int as "totalCount"
+      FROM outfits o
+      JOIN outfit_items oi ON o.id = oi."outfitId"
+      WHERE oi."clothId" = :clothId AND o."userId" = :userId
+      ORDER BY o."createdAt" DESC
+      LIMIT 5
+    `;
+    const outfitsResult = await sequelize.query(outfitsQuery, {
+      replacements: { clothId, userId },
+      type: sequelize.QueryTypes.SELECT,
+    });
+
+    const totalOutfitCount = outfitsResult.length > 0 ? outfitsResult[0].totalCount : 0;
+    const outfits = outfitsResult.map(({ totalCount, ...rest }) => rest);
+
     return {
       ...clothData,
       imageUrl,
+      outfits,
+      totalOutfitCount,
     };
   };
 
-  // Update cloth
+
   updateCloth = async ({ userId, clothId, updateData }) => {
     // Start a Transaction
     const t = await sequelize.transaction();
 
     try {
       const cloth = await Cloth.findOne({ where: { id: clothId, userId } });
-      if (!cloth) throw new Error("Cloth not found");
+      if (!cloth) throw new AppError(404, "Cloth not found", "NOT_FOUND");
 
       const {
         name,
@@ -280,21 +296,17 @@ class ClothService {
     }
   };
 
-  // Delete cloth
+
   deleteCloth = async ({ userId, clothId }) => {
     const cloth = await Cloth.findOne({ where: { id: clothId, userId } });
-    if (!cloth) throw new Error("Cloth not found");
+    if (!cloth) throw new AppError(404, "Cloth not found", "NOT_FOUND");
 
     const outfitUsageCount = await OutfitItem.count({
       where: { clothId: cloth.id },
     });
 
     if (outfitUsageCount > 0) {
-      const error = new Error(
-        `Cannot delete item. It is currently being used in ${outfitUsageCount} outfit(s). Please remove it from the outfits first.`
-      );
-      error.status = 409;
-      throw error;
+      throw new AppError(409, `Cannot delete item. It is currently being used in ${outfitUsageCount} outfit(s). Please remove it from the outfits first.`, "CONFLICT");
     }
 
     const imagePath = cloth.imagePath;
@@ -302,7 +314,9 @@ class ClothService {
     await cloth.destroy();
 
     // Clean up AWS S3
-    if (imagePath) this.storageService.deleteFile(imagePath);
+    if (imagePath) {
+      this.storageService.deleteFile(imagePath);
+    }
 
     return { message: "Cloth deleted successfully" };
   };
@@ -313,6 +327,19 @@ class ClothService {
       SELECT COUNT(*)::int as "totalClothes"
       FROM clothes
       WHERE "userId" = :userId
+    `;
+
+    // Unworn Clothes Count
+    const unwornQuery = `
+      SELECT COUNT(c.id)::int as "unwornCount"
+      FROM clothes c
+      WHERE c."userId" = :userId
+        AND NOT EXISTS (
+          SELECT 1
+          FROM outfit_items oi
+          JOIN wear_history wh ON wh."outfitId" = oi."outfitId"
+          WHERE oi."clothId" = c.id
+        )
     `;
 
     // Count by Type (e.g. Hijab: 10, Skirt: 5)
@@ -345,9 +372,13 @@ class ClothService {
       ORDER BY count DESC;
     `;
 
-    // Execute all 3 in parallel for performance
-    const [totalResult, typeResult, statusResult] = await Promise.all([
+    // Execute all 4 in parallel for performance
+    const [totalResult, unwornResult, typeResult, statusResult] = await Promise.all([
       sequelize.query(totalQuery, {
+        replacements: { userId },
+        type: sequelize.QueryTypes.SELECT,
+      }),
+      sequelize.query(unwornQuery, {
         replacements: { userId },
         type: sequelize.QueryTypes.SELECT,
       }),
@@ -363,6 +394,7 @@ class ClothService {
 
     return {
       totalCount: totalResult[0]?.totalClothes || 0,
+      unwornCount: unwornResult[0]?.unwornCount || 0,
       byType: typeResult,
       byStatus: statusResult,
     };
