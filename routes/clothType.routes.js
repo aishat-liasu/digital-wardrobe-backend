@@ -1,6 +1,5 @@
 import { Router } from "express";
 import ClothTypeController from "../controllers/clothType.controller.js";
-import verifyCognitoToken from "../middleware/auth.middleware.js";
 
 export default class ClothTypeRoutes {
   path = "/api/cloth-types";
@@ -15,8 +14,5 @@ export default class ClothTypeRoutes {
     this.router.get("/", this.controller.getAll);
     this.router.get("/:id", this.controller.getById);
 
-    // this.router.post("/", verifyCognitoToken, this.controller.create);
-    // this.router.put("/:id", verifyCognitoToken, this.controller.update);
-    // this.router.delete("/:id", verifyCognitoToken, this.controller.delete);
   }
 }
