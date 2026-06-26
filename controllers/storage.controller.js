@@ -11,7 +11,7 @@ class StorageController {
     const allowedFolders = ["clothes", "outfits", "avatars"];
     const targetFolder = allowedFolders.includes(folder) ? folder : "misc";
 
-    const data = this.storageService.generatePresignedUrl({
+    const data = await this.storageService.generatePresignedUrl({
       fileName,
       fileType,
       targetFolder,
