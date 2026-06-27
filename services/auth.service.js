@@ -21,24 +21,19 @@ const userService = new UserService();
 
 class AuthService {
   signUp = async ({ email, firstName, lastName }) => {
-    try {
-      const secretHash = generateSecretHash(email, clientId, clientSecret);
-
-      const params = {
-        ClientId: clientId,
-        Username: email,
-        SecretHash: secretHash,
-        UserAttributes: [
-          { Name: "email", Value: email },
-          { Name: "given_name", Value: firstName },
-          { Name: "family_name", Value: lastName },
-        ],
-      };
-      const command = new SignUpCommand(params);
-      return await client.send(command);
-    } catch (error) {
-      throw error;
-    }
+    const secretHash = generateSecretHash(email, clientId, clientSecret);
+    const params = {
+      ClientId: clientId,
+      Username: email,
+      SecretHash: secretHash,
+      UserAttributes: [
+        { Name: "email", Value: email },
+        { Name: "given_name", Value: firstName },
+        { Name: "family_name", Value: lastName },
+      ],
+    };
+    const command = new SignUpCommand(params);
+    return await client.send(command);
   };
 
   confirmSignUp = async ({ email, code }) => {
@@ -106,23 +101,19 @@ class AuthService {
   };
 
   login = async (email) => {
-    try {
-      const secretHash = generateSecretHash(email, clientId, clientSecret);
-      const params = {
-        AuthFlow: "USER_AUTH",
-        ClientId: clientId,
-        AuthParameters: {
-          USERNAME: email,
-          PREFERRED_CHALLENGE: "EMAIL_OTP",
-          SECRET_HASH: secretHash,
-        },
-      };
+    const secretHash = generateSecretHash(email, clientId, clientSecret);
+    const params = {
+      AuthFlow: "USER_AUTH",
+      ClientId: clientId,
+      AuthParameters: {
+        USERNAME: email,
+        PREFERRED_CHALLENGE: "EMAIL_OTP",
+        SECRET_HASH: secretHash,
+      },
+    };
 
-      const command = new InitiateAuthCommand(params);
-      return await client.send(command);
-    } catch (error) {
-      throw error;
-    }
+    const command = new InitiateAuthCommand(params);
+    return await client.send(command);
   };
 
   verifyOtp = async ({ email, code, session }) => {
