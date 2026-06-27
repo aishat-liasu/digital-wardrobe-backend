@@ -1,0 +1,58 @@
+name: Deploy to AWS Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run Quality Checks (Linting & Testing)
+        run: |
+          npm ci
+          npm run lint
+
+      - name: Create ZIP Deployment Package
+        run: zip -r deploy.zip . -x "*.git*" "node_modules/*" "logs/*" "coverage/*" ".env*"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_DEPLOYMENT_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_DEPLOYMENT_ACCESS_SECRET }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Upload and Deploy using AWS CLI
+        run: |
+          APP_NAME="dw-app-backend"
+          ENV_NAME="dw-app-backend-env"
+          VERSION_LABEL="v-${{ github.sha }}"
+
+          # Your S3 bucket for storing deployment zips
+          S3_BUCKET="${{ secrets.AWS_DEPLOYMENT_S3_BUCKET_NAME }}"
+
+          echo "Uploading to S3..."
+          aws s3 cp deploy.zip s3://$S3_BUCKET/$APP_NAME/$VERSION_LABEL.zip
+
+          echo "Creating new Elastic Beanstalk version..."
+          aws elasticbeanstalk create-application-version \
+            --application-name $APP_NAME \
+            --version-label $VERSION_LABEL \
+            --source-bundle S3Bucket=$S3_BUCKET,S3Key=$APP_NAME/$VERSION_LABEL.zip
+            
+          echo "Deploying version to Environment..."
+          aws elasticbeanstalk update-environment \
+            --application-name $APP_NAME \
+            --environment-name $ENV_NAME \
+            --version-label $VERSION_LABEL
