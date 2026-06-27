@@ -20,7 +20,7 @@ jobs:
 
       - name: Run Quality Checks (Linting & Testing)
         run: |
-          npm install
+          npm ci
           npm run lint
 
       - name: Create ZIP Deployment Package
