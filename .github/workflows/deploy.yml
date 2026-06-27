@@ -14,13 +14,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "22"
 
       - name: Run Quality Checks (Linting & Testing)
         run: |
-          npm ci
+          npm install
           npm run lint
 
       - name: Create ZIP Deployment Package
