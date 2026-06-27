@@ -37,7 +37,7 @@ jobs:
         run: |
           APP_NAME="dw-app-backend"
           ENV_NAME="dw-app-backend-env"
-          VERSION_LABEL="v-${{ github.sha }}"
+          VERSION_LABEL="v-${{ github.sha }}-${{ github.run_number }}"
 
           # Your S3 bucket for storing deployment zips
           S3_BUCKET="${{ secrets.AWS_DEPLOYMENT_S3_BUCKET_NAME }}"
