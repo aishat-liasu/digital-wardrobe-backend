@@ -21,7 +21,7 @@ export const config = {
     },
     aws: {
         region: process.env.AWS_REGION || "us-east-1",
-        bucketName: process.env.AWS_BUCKET_NAME,
+        bucketName: process.env.S3_BUCKET_NAME,
         s3AccessKey: process.env.S3_ACCESS_KEY,
         s3SecretKey: process.env.S3_ACCESS_SECRET,
         userPoolId: process.env.COGNITO_USER_POOL_ID,
