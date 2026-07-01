@@ -23,7 +23,15 @@ const sequelize = new Sequelize(
       min: config.db.poolMin,
       acquire: 30000, // Maximum time (ms) to wait for a connection
       idle: 10000   // Maximum time (ms) a connection can be idle before being released
-    }
+    },
+    ...(config.env === "production" && {
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false
+        }
+      }
+    })
   }
 );
 
@@ -77,6 +85,11 @@ const createDbIfNotExists = async () => {
     host: config.db.host,
     port: config.db.port,
     database: "postgres",
+    ...(config.env === "production" && {
+      ssl: {
+        rejectUnauthorized: false
+      }
+    })
   });
 
   try {
