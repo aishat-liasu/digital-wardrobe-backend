@@ -8,7 +8,8 @@ RUN npm ci --omit=dev
 
 COPY . .
 
-EXPOSE 3000
+ENV PORT=3000
+EXPOSE $PORT
 
 ENV NODE_ENV=production
 
